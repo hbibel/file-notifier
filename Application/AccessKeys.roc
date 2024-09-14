@@ -4,7 +4,9 @@ module [
     AccessKeyAdapters,
     CreateAccessKeyError,
     createAccessKey,
+    generateId, # TODO unexport
 ]
+import Lib.RandomUtils
 
 AccessKeyId : Str
 
@@ -13,7 +15,7 @@ AccessKey : {
     key : Str,
 }
 
-CreateAccessKeyError : [AccessKeyAlreadyExists AccessKeyId]
+CreateAccessKeyError : [AccessKeyAlreadyExists AccessKeyId, OtherError Str]
 
 PersistAccessKeyError : [DuplicateId AccessKeyId]
 AccessKeyAdapters : {
@@ -22,7 +24,7 @@ AccessKeyAdapters : {
 
 createAccessKey : AccessKeyAdapters -> Task {} CreateAccessKeyError
 createAccessKey = \{ persistNewAccessKey } ->
-    id = generateId
+    id = generateId!
     key = generateKey
     client = { id, key }
 
@@ -30,19 +32,16 @@ createAccessKey = \{ persistNewAccessKey } ->
         when err is
             DuplicateId dup -> AccessKeyAlreadyExists dup
 
+accessKeyChars =
+    List.range { start: At 30, end: At 39 } # digits
+    |> List.concat (List.range { start: At 65, end: At 90 }) # uppercase chars
+    |> List.concat (List.range { start: At 97, end: At 122 }) # lowercase chars
+
+generateId : Task Str CreateAccessKeyError
 generateId =
-    "TODO"
+    Lib.RandomUtils.generateString accessKeyChars 12
+    |> Task.mapErr \_ -> OtherError "Failed to generate a random string"
 
+generateKey : Str
 generateKey =
-    "TODO"
-
-expect
-    # When invoked, persists an access key and returns it
-    stubAdapters = {
-        persistNewAccessKey: \_ -> Task.ok {},
-    }
-
-    key = stubAdapters |> createAccessKey
-
-    # TODO expectation on Tasks?
-    Bool.false
+    "123"
