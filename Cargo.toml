@@ -5,5 +5,15 @@ edition = "2021"
 
 [dependencies]
 actix-web = "4"
+chrono = "0.4.38"
+futures = "0.3"
 rand = "0.8.5"
 thiserror = "1.0.63"
+
+[dependencies.uuid]
+version = "1.10.0"
+features = [
+    "v4",
+    "v7",
+    "fast-rng",
+]

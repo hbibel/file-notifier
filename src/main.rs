@@ -2,8 +2,6 @@ mod application;
 
 use actix_web::{get, App, HttpResponse, HttpServer, Responder};
 
-use application::access_keys;
-
 #[get("/live")]
 async fn live() -> impl Responder {
     HttpResponse::Ok().body("OK")

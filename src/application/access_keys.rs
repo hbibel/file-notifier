@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+// TODO
 mod store;
 
 use thiserror::Error;
