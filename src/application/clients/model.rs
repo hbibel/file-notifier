@@ -3,7 +3,7 @@
 
 use std::fmt::Display;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ClientId(u32);
 
 impl Display for ClientId {

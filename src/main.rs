@@ -1,3 +1,4 @@
+mod adapters;
 mod application;
 
 use actix_web::{get, App, HttpResponse, HttpServer, Responder};

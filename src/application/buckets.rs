@@ -1,10 +1,10 @@
 #![allow(dead_code)]
 // TODO
 
-mod error_model;
-mod file_store;
-mod model;
-mod repository;
+pub mod error_model;
+pub mod file_store;
+pub mod model;
+pub mod repository;
 
 use super::clients::model::ClientId;
 use error_model::{
@@ -56,7 +56,7 @@ impl<A: repository::Repository, B: file_store::FileStore> BucketService<A, B> {
         // start transaction, commit only if all futures complete
         futures::future::try_join(
             self.repository
-                .add_file(bucket_name, owner_id, &file_meta_data, timestamp)
+                .add_file(bucket_name, &file_meta_data)
                 .map_err(InsertFileError::from),
             self.file_store
                 .persist(&file.data, &file_meta_data.id, timestamp)
@@ -80,7 +80,7 @@ impl<A: repository::Repository, B: file_store::FileStore> BucketService<A, B> {
         // start transaction, commit only if all futures complete
         futures::future::try_join(
             self.repository
-                .update_file(bucket_name, owner_id, &file.meta_data, timestamp)
+                .update_file(&file.meta_data)
                 .map_err(UpdateFileError::from),
             self.file_store
                 .persist(&file.data, &file.meta_data.id, timestamp)
@@ -93,16 +93,13 @@ impl<A: repository::Repository, B: file_store::FileStore> BucketService<A, B> {
 
     pub async fn update_file_metadata(
         &self,
-        timestamp: &Timestamp,
         bucket_name: &str,
         owner_id: &ClientId,
         file_meta_data: &FileMeta,
     ) -> Result<(), UpdateFileMetadataError> {
         self.check_bucket_access(bucket_name, owner_id).await?;
 
-        self.repository
-            .update_file(bucket_name, owner_id, file_meta_data, timestamp)
-            .await?;
+        self.repository.update_file(file_meta_data).await?;
 
         Ok(())
     }
@@ -115,9 +112,7 @@ impl<A: repository::Repository, B: file_store::FileStore> BucketService<A, B> {
     ) -> Result<(), DeleteFileError> {
         self.check_bucket_access(bucket_name, owner_id).await?;
 
-        self.repository
-            .delete_file(bucket_name, owner_id, file_id)
-            .await?;
+        self.repository.delete_file(file_id).await?;
 
         Ok(())
     }
@@ -130,7 +125,7 @@ impl<A: repository::Repository, B: file_store::FileStore> BucketService<A, B> {
         self.check_bucket_access(bucket_name, owner_id).await?;
 
         self.repository
-            .get_files(bucket_name, owner_id)
+            .get_files(bucket_name)
             .await
             .map_err(GetFilesError::RepositoryError)
     }
