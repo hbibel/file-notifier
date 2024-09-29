@@ -1,4 +1,5 @@
 use chrono::{DateTime, Utc};
+use tokio::io::{AsyncRead, AsyncWrite};
 
 use super::super::clients::model::ClientId;
 
@@ -8,10 +9,11 @@ pub struct FileMeta {
     pub name: String,
 }
 
-pub trait FileData: Iterator<Item = u8> {}
-pub struct File<I: FileData> {
+pub trait FileIO: AsyncRead + AsyncWrite + Unpin {}
+
+pub struct File<DataT: FileIO> {
     pub meta_data: FileMeta,
-    pub data: I,
+    pub data: DataT,
 }
 
 pub struct Bucket {

@@ -12,7 +12,7 @@ use error_model::{
     UpdateFileError, UpdateFileMetadataError,
 };
 use futures::TryFutureExt;
-use model::{BucketId, FileId, FileMeta, Timestamp};
+use model::{BucketId, FileIO, FileId, FileMeta};
 
 pub struct BucketService<A: repository::Repository, B: file_store::FileStore> {
     repository: A,
@@ -35,13 +35,12 @@ impl<A: repository::Repository, B: file_store::FileStore> BucketService<A, B> {
         Ok(id)
     }
 
-    pub async fn insert_file<T: model::FileData>(
+    pub async fn insert_file<FileDataT: FileIO>(
         &self,
-        timestamp: &Timestamp,
         bucket_name: &str,
         owner_id: &ClientId,
         file_name: &str,
-        file: &model::File<T>,
+        file: &mut model::File<FileDataT>,
     ) -> Result<(), InsertFileError> {
         self.check_bucket_access(bucket_name, owner_id).await?;
 
@@ -59,7 +58,7 @@ impl<A: repository::Repository, B: file_store::FileStore> BucketService<A, B> {
                 .add_file(bucket_name, &file_meta_data)
                 .map_err(InsertFileError::from),
             self.file_store
-                .persist(&file.data, &file_meta_data.id, timestamp)
+                .persist(&mut file.data, &file_meta_data.id)
                 .map_err(InsertFileError::from),
         )
         .await?;
@@ -67,12 +66,11 @@ impl<A: repository::Repository, B: file_store::FileStore> BucketService<A, B> {
         Ok(())
     }
 
-    pub async fn update_file<T: model::FileData>(
+    pub async fn update_file<FileDataT: FileIO>(
         &self,
-        timestamp: &Timestamp,
         bucket_name: &str,
         owner_id: &ClientId,
-        file: &model::File<T>,
+        file: &mut model::File<FileDataT>,
     ) -> Result<(), UpdateFileError> {
         self.check_bucket_access(bucket_name, owner_id).await?;
 
@@ -83,7 +81,7 @@ impl<A: repository::Repository, B: file_store::FileStore> BucketService<A, B> {
                 .update_file(&file.meta_data)
                 .map_err(UpdateFileError::from),
             self.file_store
-                .persist(&file.data, &file.meta_data.id, timestamp)
+                .persist(&mut file.data, &file.meta_data.id)
                 .map_err(UpdateFileError::from),
         )
         .await?;
